@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, Sparkles, CheckCircle, Calendar, Plus } from "lucide-react";
+import { Send, Loader2, Sparkles, CheckCircle, Calendar, Plus, Mic, StopCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -54,8 +54,12 @@ export default function Chat() {
     }
   ]);
   const [inputValue, setInputValue] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -147,6 +151,95 @@ export default function Chat() {
     const h12 = h % 12 || 12;
     return `${h12}:${minutes} ${ampm}`;
   };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      // Update recording time every second
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+
+      const chunks: BlobPart[] = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        chunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        if (recordingIntervalRef.current) {
+          clearInterval(recordingIntervalRef.current);
+        }
+        
+        const audioBlob = new Blob(chunks, { type: "audio/wav" });
+        await transcribeAudio(audioBlob);
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+    } catch (error) {
+      toast({
+        title: "Microphone Error",
+        description: "Could not access your microphone. Please check permissions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
+    }
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.wav");
+
+      const response = await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to transcribe audio");
+      }
+
+      const data = await response.json();
+      if (data.text) {
+        setInputValue(data.text);
+        toast({
+          title: "Transcription Complete",
+          description: "Your voice has been converted to text",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Transcription Error",
+        description: "Could not transcribe audio. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
 
   const clearChat = () => {
     setMessages([{
@@ -271,31 +364,63 @@ export default function Chat() {
           </ScrollArea>
           
           <div className="p-4 border-t">
-            <div className="flex gap-3">
-              <Input
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Describe your task... (e.g., 'I need to study for 2 hours every evening')"
-                disabled={chatMutation.isPending}
-                className="flex-1"
-                data-testid="input-chat-message"
-              />
-              <Button
-                onClick={handleSend}
-                disabled={!inputValue.trim() || chatMutation.isPending}
-                data-testid="button-send-message"
-              >
-                {chatMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="space-y-3">
+              {isRecording && (
+                <div className="flex items-center justify-between bg-red-100 text-red-800 px-4 py-2 rounded-lg">
+                  <span className="text-sm font-medium">Recording: {formatRecordingTime(recordingTime)}</span>
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-3">
+                <Input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Describe your task... (e.g., 'I need to study for 2 hours every evening')"
+                  disabled={chatMutation.isPending || isRecording}
+                  className="flex-1"
+                  data-testid="input-chat-message"
+                />
+                {isRecording ? (
+                  <Button
+                    onClick={stopRecording}
+                    variant="destructive"
+                    size="icon"
+                    className="flex-shrink-0"
+                    title="Stop recording"
+                  >
+                    <StopCircle className="h-4 w-4" />
+                  </Button>
                 ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Send
-                  </>
+                  <Button
+                    onClick={startRecording}
+                    variant="outline"
+                    size="icon"
+                    className="flex-shrink-0"
+                    title="Start voice recording"
+                    disabled={chatMutation.isPending}
+                  >
+                    <Mic className="h-4 w-4" />
+                  </Button>
                 )}
-              </Button>
+                <Button
+                  onClick={handleSend}
+                  disabled={!inputValue.trim() || chatMutation.isPending || isRecording}
+                  data-testid="button-send-message"
+                >
+                  {chatMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Send
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

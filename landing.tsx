@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, Brain, Upload, Sparkles, CheckCircle } from "lucide-react";
+import { Calendar, Clock, Brain, Upload, Sparkles, CheckCircle, BarChart3, Share2, Download, Mic } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Landing() {
@@ -63,6 +63,36 @@ export default function Landing() {
               <CardTitle>Interactive Calendar</CardTitle>
               <CardDescription>
                 Drag-and-drop your tasks, view daily or weekly, and connect with Google Calendar
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card data-testid="card-feature-voice">
+            <CardHeader>
+              <Mic className="h-10 w-10 text-primary mb-2" />
+              <CardTitle>Voice Commands</CardTitle>
+              <CardDescription>
+                Use voice recording to create tasks, add events, and modify your schedule hands-free
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card data-testid="card-feature-export">
+            <CardHeader>
+              <Download className="h-10 w-10 text-primary mb-2" />
+              <CardTitle>Export & Share</CardTitle>
+              <CardDescription>
+                Download as PDF, create shareable links, or export to calendar applications
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card data-testid="card-feature-responsive">
+            <CardHeader>
+              <BarChart3 className="h-10 w-10 text-primary mb-2" />
+              <CardTitle>Mobile Optimized</CardTitle>
+              <CardDescription>
+                Fully responsive design works seamlessly on desktop, tablet, and mobile devices
               </CardDescription>
             </CardHeader>
           </Card>
