@@ -1,0 +1,112 @@
+Build a full-stack AI-powered personal scheduling website with the following requirements:
+
+1. General Description
+
+Create a clean, modern web app that automatically generates a personalized, healthy, realistic daily and weekly schedule for the user.
+Users should upload their class schedule (as an image), enter tasks, deadlines, and workload, and the AI should intelligently fill all free time slots with the tasks in a practical, manageable way.
+
+2. Schedule Input (Upload)
+
+Provide a component where the user can upload a screenshot or photo of their class schedule.
+
+Use OCR to extract:
+
+class names
+
+start & end times
+
+days of the week
+
+Convert this into a structured timetable format stored in the backend.
+
+3. Task Input
+
+Provide a task-creation panel where the user can add:
+
+task name
+
+expected duration
+
+deadline
+
+priority level
+
+category (school, workout, personal, health, etc.)
+
+4. AI Scheduling Engine
+
+Build an AI function that:
+
+analyzes the extracted class schedule
+
+finds all open/free time blocks
+
+places tasks into the best available slots
+
+ensures:
+
+tasks have enough time to be fully completed
+
+schedule remains healthy (reasonable work hours, breaks included)
+
+workload is spread realistically across days
+
+urgent tasks appear earlier
+
+long tasks are split into multiple manageable sessions
+
+sleep time (user-defined or default 11pm–7am) is protected
+
+5. Output Format
+
+Generate a clean weekly calendar view that shows:
+
+extracted class schedule
+
+added tasks placed into free blocks
+
+time-block color coding
+
+ability to rearrange tasks manually (drag + drop)
+
+Also provide:
+
+a “Regenerate Schedule” button
+
+a “Download schedule as PDF” option
+
+6. Additional Features (fill them in creatively)
+
+Add several smart features, including:
+
+Task health recommendations (if schedule is overloaded, warn user)
+
+Automatic break insertion
+
+Focus session timer (Pomodoro option)
+
+Daily summary page (tasks completed, remaining, ETA)
+
+Sync with Google Calendar (optional)
+
+7. Technical Requirements
+
+Use React (or Next.js) for the frontend.
+
+Use Python/Node backend for OCR + scheduling logic.
+
+Use a simple database (SQLite, Supabase, or Replit DB).
+
+UI should be clean, minimalistic, and aesthetic.
+
+All code must be included in the Replit project.
+
+8. AI Model Integration
+
+Use an LLM (Replit AI or other available models) to:
+
+interpret schedule screenshot
+
+reason about task placement
+
+justify and adjust the final schedule
